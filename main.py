@@ -1,64 +1,48 @@
-from tkinter import *
+import streamlit as st
+import time
 
-잔여시간 = 0
-cnt = 0
-timer_job = None     # after() id 저장
-running = False      # 타이머 동작 여부
+# 상태 초기화
+if 'start_time' not in st.session_state:
+    st.session_state.start_time = None
+if 'count' not in st.session_state:
+    st.session_state.count = 0
+if 'running' not in st.session_state:
+    st.session_state.running = False
+if 'duration' not in st.session_state:
+    st.session_state.duration = 5  # 제한 시간 설정
 
-def start_timer(): # 중복 예약 방지: 기존 타이머 취소
-    global 잔여시간, time_job, running, cnt
-    if timer_job is not None:
-        tk.after_cancel(timer_job)
-    잔여시간 = 5
-    cnt = 0
-    Ib,comfig(text = '현재 횟수:0')
-    timer_label.config(text = f'time left: (잔여시간) seconds')
-    bt1.config(state=NoRMAL, command = clicke)
-    start
-    running=True
-    update_timer()
+st.title('⏱️ 제한된 시간 동안 클릭 게임!')
 
+# 시작 버튼
+if st.button("게임 시작"):
+    st.session_state.start_time = time.time()
+    st.session_state.count = 0
+    st.session_state.running = True
+    st.experimental_rerun()  # 화면 갱신
+
+# 타이머 계산
+if st.session_state.running:
+    elapsed = time.time() - st.session_state.start_time
+    remaining = st.session_state.duration - int(elapsed)
     
-def update_timer():
-    global 잔여시간, time_job, running, cnt
-    timer_label.config(text = f'time left: (잔여시간) seconds')
-    if 잔여 시간 <=0:
-        running=False
-        bt1.config(state=DISABLED)
-        Ib.config(text='최종 횟수: '+str(cnt))
-        timer_label.config(text='Time OVER')
-        start_button.config(state=NORMAL)
-        timer_job = None
-        return
-    잔여시간
-def click():
-    global cnt
-    if running:
-        cnt += 1
-        lb.config(text='현재 횟수: ' + str(cnt))
+    if remaining <= 0:
+        st.session_state.running = False
+        remaining = 0
 
-def reset():
-    global cnt
-    cnt = 0
-    lb.config(text='현재 횟수: 0')
+    st.markdown(f"### 남은 시간: `{remaining}초`")
+    st.markdown(f"### 현재 점수: `{st.session_state.count}`")
 
-tk = Tk()
-tk.geometry('500x220')
-tk.title('주어진 시간동안 최대한 많이 클릭하세요!')
+    if remaining > 0:
+        if st.button("클릭!"):
+            st.session_state.count += 1
+            st.experimental_rerun()
 
-timer_label = Label(tk, text="Time left: 0 seconds", font=("Arial", 20), fg="black")
-timer_label.pack(pady=10)
+    if remaining == 0:
+        st.success(f"⏰ 시간 종료! 최종 점수: {st.session_state.count}")
 
-start_button = Button(tk, text="Start Timer", command=start_timer)
-start_button.pack(pady=5)
-
-lb = Label(tk, text='현재 횟수: 0', fg='blue', font=("Arial", 16))
-lb.pack()
-
-bt1 = Button(tk, text='Button', command=click, state=DISABLED)
-bt1.pack(padx=10, pady=6)
-
-bt2 = Button(tk, text='reset', command=reset)
-bt2.pack(padx=10, pady=6)
-
-tk.mainloop()
+# 리셋 버튼
+if st.button("리셋"):
+    st.session_state.start_time = None
+    st.session_state.count = 0
+    st.session_state.running = False
+    st.experimental_rerun()
